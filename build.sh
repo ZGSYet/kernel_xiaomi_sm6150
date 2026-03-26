@@ -3,22 +3,16 @@
 # Compile script for kernel
 #
 
+# --- KONFIGURASI TELEGRAM ---
+TG_TOKEN="8647652050:AAG0ZKtMuE4NhlOKx8EHz4VHfgPLlguMTqw"
+TG_CHAT_ID="7540957411"
+# ----------------------------
+
 SECONDS=0 # builtin bash timer
 
-# Allowed codenames
-ALLOWED_CODENAMES=("sweet" "courbet" "tucana" "toco" "phoenix" "davinci")
+ZIPNAME="NekoPoi-$(date '+%Y%m%d-%H%M').zip"
 
-# Prompt user for device codename
-read -p "Enter device codename: " DEVICE
-
-# Check if the entered codename is in the allowed list
-if [[ ! " ${ALLOWED_CODENAMES[@]} " =~ " ${DEVICE} " ]]; then
-    echo "Error: Invalid codename. Allowed codenames are: ${ALLOWED_CODENAMES[*]}"
-    exit 1
-fi
-
-ZIPNAME="${DEVICE}-$(date '+%Y%m%d-%H%M').zip"
-
+DEVICE="courbet"
 export ARCH=arm64
 export KBUILD_BUILD_USER=aryan
 export KBUILD_BUILD_HOST=celeste
@@ -53,7 +47,7 @@ echo -e "\nKernel compiled successfully! Zipping up...\n"
 if [ -d "$AK3_DIR" ]; then
 	cp -r $AK3_DIR AnyKernel3
 else
-	if ! git clone -q https://github.com/basamaryan/AnyKernel3 -b master AnyKernel3; then
+	if ! git clone -q https://github.com/ZGSYet/AnyKernel3 -b master AnyKernel3; then
 		echo -e "\nAnyKernel3 repo not found locally and couldn't clone from GitHub! Aborting..."
 		exit 1
 	fi
@@ -78,4 +72,16 @@ if test -z "$(git rev-parse --show-cdup 2>/dev/null)" &&
 	HASH="$(echo $head | cut -c1-8)"
 fi
 
-telegram -f $ZIPNAME -M "Completed in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s) ! Latest commit: $HASH"
+# 5. Step: Final
+DURATION="$((SECONDS / 60)) menit $((SECONDS % 60)) detik"
+tg_update "🛠 **Kernel Build Update**
+✅ **Status**: Rampung dlm $DURATION! Lagi upload..."
+
+curl -F document=@"$ZIPNAME" \
+     -F chat_id="$TG_CHAT_ID" \
+     -F caption="✅ **NekoPoi Selesai!**
+📦 **File**: \`$ZIPNAME\`
+⏱ **Durasi**: $DURATION
+👤 **User**: $KBUILD_BUILD_USER" \
+     -F parse_mode="Markdown" \
+     "https://api.telegram.org/bot$TG_TOKEN/sendDocument"
